@@ -86,15 +86,18 @@ Answer: ...
                     q_num = f"Q{match.group(1)}"
                     questions[q_num] = {"question": match.group(2), "options": {}, "answer": ""}
                 # Match options a), b), c), d)
-                elif re.match(r"[abcd]\)", line) and q_num:
-                    option_letter = line[0]
-                    questions[q_num]["options"][option_letter] = line[2:].strip()
+                elif q_num:
+                    match_option = re.match(r"\*?\*?([a-d])\)?\s*(.*)", line)
+                    if match_option:
+                        option_letter = match_option.group(1)
+                        option_text = match_option.group(2)
+                        questions[q_num]["options"][option_letter] = option_text
                 # Match answer line
                 elif q_num:
-                    match = re.match(r"\*?\*?Answer:\*?\*?\s*(.*)", line)
-                    if match:
-                        questions[q_num]["answer"] = match.group(1).strip().split(")")[0]
-
+                    match_answer = re.match(r"\*?\*?Answer:\*?\*?\s*(.*)", line)
+                    if match_answer:
+                        # Keep only the letter (e.g., 'b' from 'b) World War II')
+                        questions[q_num]["answer"] = match_answer.group(1).strip().split(")")[0]
 
             st.session_state.questions = questions
 
@@ -102,14 +105,24 @@ Answer: ...
     if st.session_state.questions:
         st.subheader("📝 Quiz")
         for q_num, q_data in st.session_state.questions.items():
-            # Use previous answer if exists
-            default_option = st.session_state.user_answers.get(q_num, list(q_data["options"].keys())[0])
-            st.session_state.user_answers[q_num] = st.radio(
+            # Display question with radio buttons for options
+            default_option = st.session_state.user_answers.get(
+                q_num, list(q_data["options"].keys())[0]
+            )
+            # Show options as "a) text" etc.
+            option_labels = [
+                f"{key}) {value}" for key, value in q_data["options"].items()
+            ]
+            # Map default option to index
+            default_index = list(q_data["options"].keys()).index(default_option)
+            choice = st.radio(
                 q_data["question"],
-                list(q_data["options"].keys()),
-                index=list(q_data["options"].keys()).index(default_option),
+                option_labels,
+                index=default_index,
                 key=q_num
             )
+            # Save selected letter (first char)
+            st.session_state.user_answers[q_num] = choice[0]
 
         # Submit button
         if st.button("Submit Quiz"):
@@ -122,5 +135,6 @@ Answer: ...
                     score += 1
                     st.success(f"{q_data['question']} ✅ Correct!")
                 else:
-                    st.error(f"{q_data['question']} ❌ Wrong! Correct answer: {correct_answer})")
+                    correct_text = q_data["options"].get(correct_answer, "")
+                    st.error(f"{q_data['question']} ❌ Wrong! Correct answer: {correct_answer}) {correct_text}")
             st.info(f"Your score: {score}/{len(st.session_state.questions)}")
