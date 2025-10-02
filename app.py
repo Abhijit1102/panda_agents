@@ -13,7 +13,7 @@ from excel_analyser import excel_analyser_app
 from emi_calculator import emi_calculator_app
 
 # Sidebar page selector
-page = st.sidebar.selectbox("Select App", ["Excel/CSV Analyzer", "EMI Calculator", "Quiz app"])
+page = st.sidebar.selectbox("Select App", ["Excel/CSV Analyzer", "EMI Calculator"])
 
 if page == "Excel/CSV Analyzer":
     excel_analyser_app()
