@@ -8,7 +8,7 @@ import atexit
 def quiz_generator_app():
     st.title("📝 Document-based Quiz Generator with LangChain")
 
-    # Create folder for temp files
+    # Create folder for temporary files
     os.makedirs("public", exist_ok=True)
 
     # Cleanup temporary files on exit
@@ -96,8 +96,8 @@ Answer: ...
                 elif q_num:
                     match_answer = re.match(r"\*?\*?Answer:\*?\*?\s*(.*)", line)
                     if match_answer:
-                        # Keep only the letter (e.g., 'b' from 'b) World War II')
-                        questions[q_num]["answer"] = match_answer.group(1).strip().split(")")[0]
+                        # Take only the first letter a-d, lowercase
+                        questions[q_num]["answer"] = match_answer.group(1).strip()[0].lower()
 
             st.session_state.questions = questions
 
@@ -121,8 +121,8 @@ Answer: ...
                 index=default_index,
                 key=q_num
             )
-            # Save selected letter (first char)
-            st.session_state.user_answers[q_num] = choice[0]
+            # Save selected letter (first char, lowercase)
+            st.session_state.user_answers[q_num] = choice[0].lower()
 
         # Submit button
         if st.button("Submit Quiz"):
@@ -131,10 +131,10 @@ Answer: ...
             for q_num, q_data in st.session_state.questions.items():
                 correct_answer = q_data["answer"]
                 user_answer = st.session_state.user_answers[q_num]
-                if user_answer.lower() == correct_answer.lower():
+                correct_text = q_data["options"].get(correct_answer, "")
+                if user_answer == correct_answer:
                     score += 1
                     st.success(f"{q_data['question']} ✅ Correct!")
                 else:
-                    correct_text = q_data["options"].get(correct_answer, "")
                     st.error(f"{q_data['question']} ❌ Wrong! Correct answer: {correct_answer}) {correct_text}")
             st.info(f"Your score: {score}/{len(st.session_state.questions)}")
